@@ -1,0 +1,137 @@
+{
+  "id": "AIR-RC-001",
+  "title": "Information Leaked To Hosted Model",
+  "url": "https://air-governance-framework.finos.org/risks/ri-1_information-leaked-to-hosted-model.html",
+  "summary": "Using third-party hosted LLMs creates a two-way trust boundary where neither inputs nor outputs can be fully trusted. Sensitive financial data sent for inference may be memorized by models, leaked through prompt attacks, or exposed via inadequate provider controls. This risks exposing customer PII, proprietary algorithms, and confidential business information, particularly with free or poorly-governed LLM services.",
+  "description": "A core challenge arises from the nature of interactions with external LLMs, which can be conceptualized as a two-way trust boundary. Neither the data inputted into the LLM nor the output received can be fully trusted by default. Inputs containing sensitive financial information may be retained or processed insecurely by the provider, while outputs may inadvertently reveal previously processed sensitive data, even if the immediate input prompt appears benign.",
+  "threat_vectors": [
+    {
+      "name": "Model Memorization",
+      "description": "LLMs can memorize sensitive data from training or user interactions and later disclose it in unrelated sessions—even to different users."
+    },
+    {
+      "name": "Prompt-Based Attacks",
+      "description": "Adversaries can craft prompts to extract memorized sensitive information."
+    },
+    {
+      "name": "Inadequate Data Controls",
+      "description": "Poor sanitization, encryption, or access control by providers increases disclosure risk."
+    },
+    {
+      "name": "Provider Data Practices",
+      "description": "Lack of contractual guarantees around encryption, retention, and deletion means institutions may lose control over data."
+    },
+    {
+      "name": "Fine-Tuning Risks",
+      "description": "Proprietary data used for fine-tuning may become embedded in the model, leaking to unauthorized users."
+    }
+  ],
+  "consequences": [
+    "Breach of Data Privacy Regulations (e.g., GDPR, CCPA)",
+    "Violation of Financial Regulations (e.g., GLBA)",
+    "Loss of Competitive Advantage through leaked algorithms or strategies",
+    "Reputational Damage and loss of customer trust",
+    "Legal Liabilities from lawsuits and regulatory penalties"
+  ],
+  "key_risks": [
+    "Two-Way Trust Boundary between LLM inputs and outputs",
+    "Model Overfitting and Memorization of sensitive training data",
+    "External Inference Endpoint Risks with lack of transparency on how data is processed and retained"
+  ],
+  "key_mitigations": [
+    {
+      "id": "AIR-DET-015",
+      "name": "LLM-As-A-Judge",
+      "description": "This mitigation promotes the use of Large Language Models (LLMs) as evaluators of other LLM responses. It is a cost-effective alternative to human evaluation and provides scalable quality assessments. The LLM-as-a-Judge strategy supports model testing, monitoring, and performance validation in both development and production environments.",
+      "link": "https://air-governance-framework.finos.org/mitigations/mi-15_llm-as-a-judge.html"
+    },
+    {
+      "id": "AIR-DET-001",
+      "name": "Data Leakage Prevention And Detection",
+      "description": "This mitigation outlines techniques to prevent and detect the leakage of data in LLM-powered systems, especially when relying on Third-Party Service Providers (TSPs) for model inference and hosting. It highlights risks related to session data, training data, and model weights, and outlines both preventive and detective strategies.",
+      "link": "https://air-governance-framework.finos.org/mitigations/mi-1_data-leakage-prevention-and-detection.html"
+    },
+    {
+      "id": "AIR-PREV-002",
+      "name": "Data Filtering From Confluence Into The Samples",
+      "description": "This mitigation ensures that sensitive information from internal sources (e.g., Confluence) is anonymized or excluded before being embedded and stored in vector databases. It aims to reduce risks related to leakage or manipulation of confidential organizational knowledge.",
+      "link": "https://air-governance-framework.finos.org/mitigations/mi-2_data-filtering-from-confluence-into-the-samples.html"
+    },
+    {
+      "id": "AIR-DET-004",
+      "name": "System Observability",
+      "description": "System observability enables monitoring of inputs, outputs, API calls, and data movement across trust boundaries in LLM-based systems. It supports anomaly detection, SLA tracking, version control, and compliance preparation by capturing system-level behaviors for real-time and historical analysis.",
+      "link": "https://air-governance-framework.finos.org/mitigations/mi-4_system-observability.html"
+    },
+    {
+      "id": "AIR-PREV-006",
+      "name": "Data Quality & Classification/Sensitivity",
+      "description": "This mitigation ensures that data ingested into AI systems, especially from internal knowledge bases like Confluence, is filtered and classified to maintain data quality, preserve governance standards, and prevent exposure of sensitive content. Proper classification and filtering reduce the likelihood of confidential data entering model training or vector stores.",
+      "link": "https://air-governance-framework.finos.org/mitigations/mi-6_data-quality-classification-sensitivity.html"
+    },
+    {
+      "id": "AIR-PREV-007",
+      "name": "Legal/Contractual Agreements",
+      "description": "This mitigation ensures that clear legal agreements are in place between the organization and the SaaS inference provider. These agreements must be understood and verified to meet organizational policies, legal compliance, and responsible AI practices.",
+      "link": "https://air-governance-framework.finos.org/mitigations/mi-7_legal-contractual-agreements.html"
+    }
+  ],
+  "references": {
+    "owasp_llm_top_10": [
+      {
+        "id": "LLM06:2025",
+        "title": "Excessive Agency",
+        "url": "https://genai.owasp.org/llmrisk/llm6/"
+      }
+    ],
+    "ffiec": [
+      {
+        "title": "SEC: II Information Security Program Management",
+        "url": "https://ithandbook.ffiec.gov/it-booklets/information-security/ii-information-security-program-management/"
+      },
+      {
+        "title": "SEC: III Security Operations",
+        "url": "https://ithandbook.ffiec.gov/it-booklets/information-security/iii-security-operations/"
+      },
+      {
+        "title": "OTS: Risk Management",
+        "url": "https://ithandbook.ffiec.gov/it-booklets/outsourcing-technology-services/risk-management/"
+      }
+    ],
+    "eu_ai_act": [
+      {
+        "title": "III.S2.A10: Data and Data Governance",
+        "url": "https://artificialintelligenceact.eu/article/10/"
+      },
+      {
+        "title": "III.S2.A13: Transparency and Provision of Information to Deployers",
+        "url": "https://artificialintelligenceact.eu/article/13/"
+      },
+      {
+        "title": "V.S2.A53: Obligations for Providers of General-Purpose AI Models",
+        "url": "https://artificialintelligenceact.eu/article/53/"
+      }
+    ],
+    "nist_ai_600_1": [
+      {
+        "title": "2.4. Data Privacy",
+        "url": "https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.600-1.pdf#[{%22num%22:70,%22gen%22:0},{%22name%22:%22XYZ%22},70.0,450.0,0]"
+      },
+      {
+        "title": "2.9. Information Security",
+        "url": "https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.600-1.pdf#[{%22num%22:79,%22gen%22:0},{%22name%22:%22XYZ%22},70.0,415.0,0]"
+      }
+    ],
+    "additional_links": [
+      {
+        "title": "FFIEC IT Handbook",
+        "url": "https://ithandbook.ffiec.gov/"
+      },
+      {
+        "title": "Scalable Extraction of Training Data from (Production) Language Models",
+        "url": "https://arxiv.org/abs/2311.17035"
+      }
+    ]
+  },
+  "license": "CC-BY-4.0"
+}

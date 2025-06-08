@@ -1,0 +1,120 @@
+{
+  "id": "AIR-OP-004",
+  "title": "Hallucination and Inaccurate Outputs",
+  "url": "https://air-governance-framework.finos.org/risks/ri-4_hallucination-and-inaccurate-outputs.html",
+  "summary": "LLM hallucinations occur when a model generates confident but incorrect or fabricated information due to its reliance on statistical patterns rather than factual understanding. Techniques like Retrieval-Augmented Generation can reduce hallucinations by providing factual context, but they cannot fully prevent the model from introducing errors or mixing in inaccurate internal knowledge. As there is no guaranteed way to constrain outputs to verified facts, hallucinations remain a persistent and unresolved challenge in LLM applications.",
+  "description": "LLM hallucinations refer to instances when a Large Language Model (LLM) generates incorrect or nonsensical information that seems plausible but is not based on factual data or reality. These “hallucinations” occur because the model generates text based on patterns in its training data rather than true understanding or access to current, verified information.\n\nThe likelihood of hallucination can be minimised by techniques such as Retrieval Augmented Generation (RAG), providing the LLM with facts directly via the prompt. However, the response provided by the model is a synthesis of the information within the input prompt and information retained within the model. There is no reliable way to ensure the response is restricted to the facts provided via the prompt, and as such, RAG-based applications still hallucinate.\n\nThere is currently no reliable method for removing hallucinations, with this being an active area of research.",
+  "contributing_factors": [
+    {
+      "factor": "Lack of Ground Truth",
+      "description": "The model cannot distinguish between accurate and inaccurate data in its training corpus."
+    },
+    {
+      "factor": "Ambiguous or Incomplete Prompts",
+      "description": "When input prompts lack clarity or precision, the model is more likely to fabricate plausible-sounding but incorrect details."
+    },
+    {
+      "factor": "Confidence Mismatch",
+      "description": "LLMs often present hallucinated information with high fluency and syntactic confidence, making it difficult for users to recognize inaccuracies."
+    },
+    {
+      "factor": "Fine-Tuning or Prompt Bias",
+      "description": "Instructions or training intended to improve helpfulness or creativity can inadvertently increase the tendency to generate unsupported statements."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Cited Sources That Don’t Exist",
+      "description": "An LLM asked to summarize academic work may invent references, complete with plausible authors, titles, and journal names, that are entirely fictional."
+    },
+    {
+      "title": "Fabricated Legal or Medical Advice",
+      "description": "When prompted for legal precedents or medical diagnoses, LLMs may provide entirely fabricated cases or treatments that sound convincing but have no basis in reality."
+    },
+    {
+      "title": "Incorrect Product or API Descriptions",
+      "description": "Given prompts about software tools or APIs, the model may hallucinate methods, parameters, or features that are not part of the actual documentation."
+    },
+    {
+      "title": "False Historical or Scientific Claims",
+      "description": "LLMs have been known to invent historical facts (e.g., attributing events to the wrong year or country) or scientific findings (e.g., claiming a drug is approved for a condition it is not)."
+    },
+    {
+      "title": "Contradictory Reasoning",
+      "description": "In some cases, LLMs produce internally inconsistent outputs—for example, simultaneously asserting and denying the same fact in the same answer, or offering logically incompatible reasoning steps."
+    }
+  ],
+  "key_mitigations": [
+    {
+      "id": "AIR-PREV-005",
+      "name": "System Acceptance Testing",
+      "description": "System Acceptance Testing is the final phase of the software testing process where the complete system is tested against the specified requirements to ensure it meets the criteria for deployment. For non-AI systems, this will involve creating a number of test cases which are executed, with an expectation that when all tests pass the system is guaranteed to meet its requirements.\n\nWith LLM applications System Acceptance Testing has a similar form, where the complete system is tested via a set of defined test cases. However, there are a couple of notable differences when compared to non-AI systems:\n\n1. LLM-based applications exhibit variability in their output, where the same response could be phrased differently despite exactly the same preconditions. The acceptance criteria needs to accommodate this variability, using techniques to validate a given response contains (or excludes) certain information, rather than giving an exact match.\n2. For non-AI systems often the goal is to achieve a 100% pass rate for test cases. Whereas for LLM-based applications, it is likely that lower pass rate is acceptable. The overall quality of the system is considered a sliding scale rather than a fixed bar.\n\nFor example, a test harness for a RAG-based chat application would likely require a test data store which contains known ‘facts’. The test suite would comprise a number of test cases covering a wide variety of questions and responses, where the test framework asserts the factual accuracy of the response from the system under test. The suite should also include test cases that explore the various failure modes of this system, exploring bias, prompt injection, hallucination and more.\n\nSystem Acceptance Testing is a highly effective control for understanding the overall quality of an LLM-based application. While the system is under development it quantifies quality, allowing for more effective and efficient development. And when the system becomes ready for production it allows risks to be quantified.",
+      "link": "https://air-governance-framework.finos.org/mitigations/mi-5_system-acceptance-testing.html"
+    }
+  ],
+  "references": {
+    "owasp_llm_top_10": [
+      {
+        "id": "LLM09:2025",
+        "title": "Misinformation",
+        "url": "https://genai.owasp.org/llmrisk/llm9/"
+      }
+    ],
+    "owasp_ml_top_10": [
+      {
+        "id": "ML09:2023",
+        "title": "Output Integrity Attack",
+        "url": "https://owasp.org/www-project-machine-learning-security-top-10/docs/ML09_2023-Output_Integrity_Attack.html"
+      }
+    ],
+    "ffiec": [
+      {
+        "title": "DAM: III Risk Management of Development, Acquisition, and Maintenance",
+        "url": "https://ithandbook.ffiec.gov/it-booklets/development-acquisition-and-maintenance/iii-risk-management-of-development-acquisition-and-maintenance/"
+      },
+      {
+        "title": "AUD: Risk Assessment and Risk-Based Auditing",
+        "url": "https://ithandbook.ffiec.gov/it-booklets/audit/risk-assessment-and-risk-based-auditing/"
+      },
+      {
+        "title": "MGT: II Risk Management",
+        "url": "https://ithandbook.ffiec.gov/it-booklets/management/ii-risk-management/"
+      }
+    ],
+    "eu_ai_act": [
+      {
+        "title": "III.S2.A15: Accuracy, Robustness and Cybersecurity",
+        "url": "https://artificialintelligenceact.eu/article/15/"
+      },
+      {
+        "title": "III.S2.A13: Transparency and Provision of Information to Deployers",
+        "url": "https://artificialintelligenceact.eu/article/13/"
+      },
+      {
+        "title": "III.S2.A9: Risk Management System",
+        "url": "https://artificialintelligenceact.eu/article/9/"
+      }
+    ],
+    "nist_ai_600_1": [
+      {
+        "title": "2.2. Confabulation",
+        "url": "https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.600-1.pdf#[{%22num%22:67,%22gen%22:0},{%22name%22:%22XYZ%22},70.0,720.0,0]"
+      },
+      {
+        "title": "2.8. Information Integrity",
+        "url": "https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.600-1.pdf#[{%22num%22:76,%22gen%22:0},{%22name%22:%22XYZ%22},70.0,293.0,0]"
+      }
+    ],
+    "research_links": [
+      {
+        "title": "WikiChat: Stopping the Hallucination of Large Language Model Chatbots by Few-Shot Grounding on Wikipedia",
+        "url": "https://arxiv.org/abs/2305.14292"
+      },
+      {
+        "title": "Hallucination is Inevitable: An Innate Limitation of Large Language Models",
+        "url": "https://arxiv.org/abs/2401.11817"
+      }
+    ]
+  },
+  "license": "CC-BY-4.0"
+}

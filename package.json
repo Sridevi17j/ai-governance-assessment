@@ -1,0 +1,22 @@
+{
+  "name": "ai-governance-assessment",
+  "version": "1.0.0",
+  "description": "FINOS AI Governance Assessment Tool",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "cd apps/web && npm run dev",
+    "build": "cd apps/web && npm run build",
+    "start": "cd apps/web && npm run start",
+    "install:all": "npm install && cd apps/web && npm install",
+    "install:pdf": "cd apps/web && npm install jspdf@^2.5.1 html2canvas@^1.4.1",
+    "install:email": "cd apps/web && npm install googleapis@^126.0.0",
+    "setup": "npm run install:all && npm run install:pdf && npm run install:email"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}
