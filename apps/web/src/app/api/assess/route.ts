@@ -63,8 +63,8 @@ function determineApplicableRisks(userInputs: any) {
     applicableRisks.push('promptInjection')
   }
   
-  // Remove duplicates
-  return [...new Set(applicableRisks)]
+  // Remove duplicates using Array.from instead of spread operator
+  return Array.from(new Set(applicableRisks))
 }
 
 // Load only relevant framework data based on applicable risks
