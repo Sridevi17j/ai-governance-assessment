@@ -309,8 +309,8 @@ async function handleChecklistAssessment(userInputs: any, applicableRisks: strin
   const overallScore = Math.max(10, Math.min(100, 100 - avgRiskScore + (gapAnalysis.totalRiskReduction / 2)))
 
   // Create summary of implemented and missing controls for LLM analysis
-  const implementedControls = []
-  const missingControls = []
+  const implementedControls: string[] = []
+  const missingControls: string[] = []
   
   Object.entries(gapAnalysis.implementationStatus).forEach(([questionId, status]) => {
     const question = checklistQuestions.find(q => q.id === parseInt(questionId))
@@ -381,9 +381,25 @@ Provide only the analysis text, no additional formatting.`
   }
 
   // Get FINOS mitigations for risks that still need attention (only show mitigations for high-risk areas)
-  const finosRiskMitigations = []
-  const contributingFactors = []
-  const relevantExamples = []
+  const finosRiskMitigations: Array<{
+    riskId: string
+    riskName: string
+    mitigationId: string
+    mitigationName: string
+    priority: string
+    summary: string
+  }> = []
+  const contributingFactors: Array<{
+    riskId: string
+    factor: string
+    relevance: string
+    explanation: string
+  }> = []
+  const relevantExamples: Array<{
+    riskId: string
+    exampleTitle: string
+    relevanceToSystem: string
+  }> = []
   
   // Only show mitigations for risks that are still high after gap analysis
   Object.entries(adjustedRiskScores).forEach(([riskKey, score]) => {
