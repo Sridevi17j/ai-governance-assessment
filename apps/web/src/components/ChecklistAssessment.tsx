@@ -93,38 +93,31 @@ export default function ChecklistAssessment({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 relative overflow-hidden">
-      {/* Animated background elements */}
-      <div className="absolute inset-0">
-        <div className="absolute top-20 left-10 w-64 h-64 bg-purple-400 rounded-full mix-blend-multiply filter blur-2xl opacity-50 animate-blob"></div>
-        <div className="absolute bottom-20 right-10 w-64 h-64 bg-blue-400 rounded-full mix-blend-multiply filter blur-2xl opacity-40 animate-blob animation-delay-2000"></div>
-        <div className="absolute bottom-10 left-1/3 w-64 h-64 bg-pink-400 rounded-full mix-blend-multiply filter blur-2xl opacity-40 animate-blob animation-delay-4000"></div>
-      </div>
-
+    <div className="min-h-screen bg-gray-50">
       {/* Content */}
-      <div className="relative z-10 px-6 py-12">
+      <div className="px-6 py-12">
         {/* Header */}
         <div className="text-center mb-12">
-          <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
             📋 Current Implementation Assessment
           </h2>
-          <p className="text-lg md:text-xl text-gray-300 mb-6">
+          <p className="text-lg md:text-xl text-gray-600 mb-6">
             Help us understand what controls you've already implemented
           </p>
           
           {/* Progress Indicator */}
           <div className="max-w-md mx-auto mb-8">
-            <div className="flex justify-between text-sm text-white/70 mb-2">
+            <div className="flex justify-between text-sm text-gray-600 mb-2">
               <span>Progress</span>
               <span>{answeredQuestions}/{totalQuestions} questions</span>
             </div>
-            <div className="w-full bg-white/20 rounded-full h-3 backdrop-blur-sm">
+            <div className="w-full bg-gray-200 rounded-full h-3">
               <div 
-                className="bg-gradient-to-r from-green-400 to-emerald-500 h-3 rounded-full transition-all duration-500 ease-out"
+                className="bg-gray-400 h-3 rounded-full transition-all duration-500 ease-out"
                 style={{ width: `${completionPercentage}%` }}
               ></div>
             </div>
-            <div className="text-sm text-white/60 mt-1">{completionPercentage}% complete</div>
+            <div className="text-sm text-gray-500 mt-1">{completionPercentage}% complete</div>
           </div>
         </div>
 
@@ -135,18 +128,18 @@ export default function ChecklistAssessment({
             const categoryResponses = questions.filter(q => responses[q.id] !== undefined).length
             
             return (
-              <div key={categoryKey} className="backdrop-blur-md bg-white/10 rounded-3xl p-8 border border-white/20">
+              <div key={categoryKey} className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
                 <div className="flex items-center mb-6">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-r from-cyan-500 to-purple-500 flex items-center justify-center text-2xl mr-4 shadow-lg">
+                  <div className="w-12 h-12 rounded-lg bg-gray-600 flex items-center justify-center text-xl mr-4 shadow-sm">
                     {category.icon}
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-2xl font-semibold text-white mb-2">{category.title}</h3>
-                    <p className="text-white/70 text-sm mb-2">{category.description}</p>
+                    <h3 className="text-2xl font-semibold text-gray-900 mb-2">{category.title}</h3>
+                    <p className="text-gray-600 text-sm mb-2">{category.description}</p>
                     <div className={`text-sm ${
                       categoryResponses === questions.length 
-                        ? 'text-cyan-300 font-medium' 
-                        : 'text-white/60'
+                        ? 'text-gray-600 font-medium' 
+                        : 'text-gray-500'
                     }`}>
                       {categoryResponses}/{questions.length} questions answered
                       {categoryResponses === questions.length && ' ✓'}
@@ -156,22 +149,22 @@ export default function ChecklistAssessment({
 
                 <div className="space-y-6">
                   {questions.map((question, index) => (
-                    <div key={question.id} className="bg-white/5 rounded-2xl p-6 border border-white/10">
+                    <div key={question.id} className="bg-gray-50 rounded-lg p-6 border border-gray-200">
                       <div className="flex items-start space-x-4">
                         <div className="flex-shrink-0">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm ${
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
                             responses[question.id] !== undefined
-                              ? 'bg-gradient-to-r from-cyan-500 to-purple-500 shadow-lg'
-                              : 'bg-white/30'
+                              ? 'bg-gray-400 text-white shadow-sm'
+                              : 'bg-gray-300 text-gray-600'
                           }`}>
                             {responses[question.id] !== undefined ? '✓' : index + 1}
                           </div>
                         </div>
                         <div className="flex-1">
-                          <h4 className="text-lg font-semibold text-white mb-2">
+                          <h4 className="text-lg font-semibold text-gray-900 mb-2">
                             {question.question}
                           </h4>
-                          <p className="text-white/60 text-sm mb-4">
+                          <p className="text-gray-600 text-sm mb-4">
                             Purpose: {question.purpose}
                           </p>
                           
@@ -180,10 +173,10 @@ export default function ChecklistAssessment({
                             {(['yes', 'no', 'na'] as ChecklistAnswer[]).map((option) => (
                               <label
                                 key={option}
-                                className={`flex items-center space-x-2 cursor-pointer px-4 py-2 rounded-lg transition-all ${
+                                className={`flex items-center space-x-2 cursor-pointer px-4 py-2 rounded-lg transition-all border-2 ${
                                   responses[question.id] === option
-                                    ? 'bg-gradient-to-r from-cyan-500 to-purple-500 text-white shadow-lg'
-                                    : 'bg-white/20 text-white/80 hover:bg-white/30'
+                                    ? 'bg-gray-100 border-gray-400 text-gray-900 shadow-sm'
+                                    : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300 hover:shadow-sm'
                                 }`}
                               >
                                 <input
@@ -215,11 +208,11 @@ export default function ChecklistAssessment({
           })}
 
           {/* Action Buttons */}
-          <div className="backdrop-blur-md bg-gradient-to-r from-emerald-500/20 to-blue-500/20 rounded-3xl p-8 border border-white/20">
+          <div className="bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200 rounded-lg p-8">
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
                 onClick={onBack}
-                className="px-6 py-3 bg-gradient-to-r from-slate-500 to-slate-600 text-white rounded-lg hover:from-slate-600 hover:to-slate-700 transition-all flex items-center justify-center shadow-lg hover:shadow-xl transform hover:scale-105"
+                className="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-all flex items-center justify-center shadow-sm hover:shadow-md"
               >
                 <span className="mr-2">←</span>
                 Back to Form
@@ -228,10 +221,10 @@ export default function ChecklistAssessment({
               <button
                 onClick={submitChecklist}
                 disabled={isLoading || !isFormComplete()}
-                className={`px-8 py-3 rounded-lg transition-all flex items-center justify-center shadow-lg hover:shadow-xl transform hover:scale-105 ${
+                className={`px-8 py-3 rounded-lg transition-all flex items-center justify-center shadow-sm hover:shadow-md ${
                   isLoading || !isFormComplete()
-                    ? 'bg-gray-500 cursor-not-allowed opacity-60'
-                    : 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white hover:from-emerald-600 hover:to-cyan-600'
+                    ? 'bg-gray-400 cursor-not-allowed opacity-60 text-white'
+                    : 'bg-gray-600 hover:bg-gray-700 text-white'
                 }`}
               >
                 {isLoading ? (
@@ -249,13 +242,13 @@ export default function ChecklistAssessment({
             </div>
             
             {!isFormComplete() && (
-              <p className="text-center text-yellow-300 text-sm mt-4">
+              <p className="text-center text-gray-600 text-sm mt-4">
                 Please answer all {totalQuestions} questions to proceed with assessment
               </p>
             )}
             
             {isFormComplete() && (
-              <p className="text-center text-green-300 text-sm mt-4">
+              <p className="text-center text-gray-700 text-sm mt-4">
                 ✅ All questions answered! Ready for AI analysis
               </p>
             )}

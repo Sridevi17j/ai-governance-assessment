@@ -76,8 +76,8 @@ export function calculateRiskScoresWithGaps(
     const reduction = categoryReductions[categoryKey] || 0
     
     // Risk scores: higher = worse, so we subtract the reduction
-    const adjustedScore = Math.max(0, baseScore - reduction)
-    adjustedRiskScores[riskKey] = Math.min(100, adjustedScore)
+    const adjustedScore = Math.max(20, baseScore - reduction) // Ensure minimum 20
+    adjustedRiskScores[riskKey] = Math.min(80, adjustedScore) // Ensure maximum 80
   })
 
   // Calculate gap analysis

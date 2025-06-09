@@ -37,101 +37,92 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen modern-gradient relative overflow-hidden">
-      {/* Floating Background Elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="floating-element absolute top-20 left-10 w-72 h-72 bg-white/10 rounded-full blur-xl"></div>
-        <div className="floating-element absolute top-40 right-20 w-96 h-96 bg-purple-300/20 rounded-full blur-2xl" style={{animationDelay: '2s'}}></div>
-        <div className="floating-element absolute bottom-20 left-1/3 w-80 h-80 bg-blue-300/15 rounded-full blur-xl" style={{animationDelay: '4s'}}></div>
-      </div>
-
-      <div className="relative z-10">
-        {/* Header */}
-        <header className="px-6 py-8">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
-                  <span className="text-2xl">🛡️</span>
-                </div>
-                <div>
-                  <h1 className="text-2xl font-bold text-white">FINOS AI Governance</h1>
-                  <p className="text-white/70 text-sm">Enterprise AI Risk Assessment</p>
-                </div>
+    <div className="min-h-screen bg-gray-50">
+      {/* Clean Header */}
+      <header className="bg-white border-b border-gray-200 px-6 py-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold">🛡️</span>
               </div>
-              <div className="hidden md:flex items-center space-x-6 text-white/80 text-sm">
-                <span>Framework v2.0</span>
-                <span>•</span>
-                <span>Industry Standard</span>
+              <div>
+                <h1 className="text-xl font-semibold text-gray-900">FINOS AI Governance</h1>
+                <p className="text-sm text-gray-600">Enterprise AI Risk Assessment</p>
               </div>
             </div>
+            <div className="hidden md:flex items-center space-x-6 text-sm text-gray-500">
+              <span>Framework v2.0</span>
+              <span>•</span>
+              <span>Industry Standard</span>
+            </div>
           </div>
-        </header>
+        </div>
+      </header>
 
-        {/* Main Content */}
-        <main className="px-6 pb-12">
-          <div className="max-w-7xl mx-auto">
-            {currentStep === 'form' && (
-              <div className="fade-in">
-                {/* Hero Section */}
-                <div className="text-center mb-16">
-                  <h2 className="text-3xl md:text-4xl font-bold text-white mb-6 leading-tight">
-                    AI Risk Assessment
-                  </h2>
-                  <p className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto leading-relaxed">
-                    Evaluate your AI system's compliance with industry-standard FINOS framework. 
-                    Get intelligent analysis and actionable recommendations.
-                  </p>
-                </div>
-
-                {/* Assessment Form */}
-                <AssessmentForm 
-                  onComplete={handleFormComplete}
-                  isLoading={isLoading}
-                  setIsLoading={setIsLoading}
-                />
+      {/* Main Content */}
+      <main className="px-6 py-8">
+        <div className="max-w-7xl mx-auto">
+          {currentStep === 'form' && (
+            <div>
+              {/* Hero Section */}
+              <div className="text-center mb-12">
+                <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                  AI Risk Assessment
+                </h2>
+                <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                  Evaluate your AI system's compliance with industry-standard FINOS framework. 
+                  Get intelligent analysis and actionable recommendations.
+                </p>
               </div>
-            )}
-            
-            {currentStep === 'checklist' && (
-              <ChecklistAssessment
-                formData={formData}
-                onComplete={handleChecklistComplete}
-                onBack={handleBackToForm}
+
+              {/* Assessment Form */}
+              <AssessmentForm 
+                onComplete={handleFormComplete}
                 isLoading={isLoading}
                 setIsLoading={setIsLoading}
               />
-            )}
-            
-            {currentStep === 'results' && (
-              <div className="fade-in">
-                <ResultsDisplay 
-                  result={assessmentResult} 
-                  onReset={handleReset}
-                />
-              </div>
-            )}
-          </div>
-        </main>
+            </div>
+          )}
+          
+          {currentStep === 'checklist' && (
+            <ChecklistAssessment
+              formData={formData}
+              onComplete={handleChecklistComplete}
+              onBack={handleBackToForm}
+              isLoading={isLoading}
+              setIsLoading={setIsLoading}
+            />
+          )}
+          
+          {currentStep === 'results' && (
+            <div>
+              <ResultsDisplay 
+                result={assessmentResult} 
+                onReset={handleReset}
+              />
+            </div>
+          )}
+        </div>
+      </main>
 
-        {/* Footer */}
-        <footer className="px-6 py-8 border-t border-white/10">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex flex-col md:flex-row items-center justify-between text-white/60 text-sm">
-              <div className="flex items-center space-x-4 mb-4 md:mb-0">
-                <span>© 2025 FINOS AI Governance Assessment</span>
-                <span>•</span>
-                <span>Built for AI Governance Hackathon</span>
-              </div>
-              <div className="flex items-center space-x-6">
-                <a href="#" className="hover:text-white transition-colors">Documentation</a>
-                <a href="#" className="hover:text-white transition-colors">Framework</a>
-                <a href="#" className="hover:text-white transition-colors">Support</a>
-              </div>
+      {/* Footer */}
+      <footer className="bg-white border-t border-gray-200 px-6 py-8 mt-16">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row items-center justify-between text-sm text-gray-500">
+            <div className="flex items-center space-x-4 mb-4 md:mb-0">
+              <span>© 2025 FINOS AI Governance Assessment</span>
+              <span>•</span>
+              <span>Built for AI Governance Hackathon</span>
+            </div>
+            <div className="flex items-center space-x-6">
+              <a href="#" className="hover:text-gray-700 transition-colors">Documentation</a>
+              <a href="#" className="hover:text-gray-700 transition-colors">Framework</a>
+              <a href="#" className="hover:text-gray-700 transition-colors">Support</a>
             </div>
           </div>
-        </footer>
-      </div>
+        </div>
+      </footer>
     </div>
   )
 }

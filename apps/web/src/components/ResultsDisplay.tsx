@@ -15,7 +15,7 @@ const importPDFLibraries = async () => {
 
 interface ResultsDisplayProps {
   result: {
-    overallScore: number
+    overallRiskScore: number // Changed from overallScore to overallRiskScore
     riskScores: Record<string, number>
     analysis: string
     riskMitigations?: Array<{
@@ -135,44 +135,23 @@ export default function ResultsDisplay({ result, onReset }: ResultsDisplayProps)
   const frameworkRefs = getFrameworkReferences()
 
   const getRiskLevel = (score: number) => {
-    if (score >= 70) return { level: 'High Risk', color: 'text-white bg-gradient-to-r from-red-500/80 to-pink-500/80' }
-    if (score >= 40) return { level: 'Medium Risk', color: 'text-white bg-gradient-to-r from-yellow-500/80 to-orange-500/80' }
-    return { level: 'Low Risk', color: 'text-white bg-gradient-to-r from-green-500/80 to-emerald-500/80' }
+    if (score >= 55) return { level: 'High Risk', color: 'text-white bg-gradient-to-r from-red-500 to-red-600' }
+    if (score >= 40) return { level: 'Medium Risk', color: 'text-white bg-gradient-to-r from-amber-500 to-yellow-500' }
+    return { level: 'Low Risk', color: 'text-white bg-gradient-to-r from-green-500 to-green-600' }
   }
 
-  const getScoreColor = (score: number) => {
-    // Overall compliance score: lower is worse (inverse of risk scores)
-    // Convert risk-based scores to compliance scores for display
-    const maxRiskScore = Math.max(...Object.values(result.riskScores))
-    const overallRiskLevel = maxRiskScore
-    
-    // If we have high risks (70+), compliance cannot be "good"
-    if (overallRiskLevel >= 70) {
-      return 'text-white bg-gradient-to-r from-red-500/80 to-pink-500/80' // Poor compliance
-    }
-    if (score >= 80) return 'text-white bg-gradient-to-r from-green-500/80 to-emerald-500/80'
-    if (score >= 60) return 'text-white bg-gradient-to-r from-yellow-500/80 to-orange-500/80' // Moderate, not good
-    if (score >= 40) return 'text-white bg-gradient-to-r from-orange-500/80 to-red-500/80'
-    return 'text-white bg-gradient-to-r from-red-500/80 to-pink-500/80'
+  const getRiskScoreColor = (score: number) => {
+    // Risk score: higher = worse (20-80 scale)
+    if (score >= 55) return 'text-white bg-gradient-to-r from-red-500 to-red-600' // High risk
+    if (score >= 40) return 'text-white bg-gradient-to-r from-amber-500 to-yellow-500' // Medium risk
+    return 'text-white bg-gradient-to-r from-green-500 to-green-600' // Low risk
   }
 
-  const getScoreLabel = (score: number) => {
-    // Check if we have high risks first
-    const maxRiskScore = Math.max(...Object.values(result.riskScores))
-    
-    // If any risk is high (70+), overall compliance cannot be excellent or good
-    if (maxRiskScore >= 70) {
-      return 'Needs Attention' // High risks require attention
-    }
-    if (maxRiskScore >= 40) {
-      return 'Moderate Compliance' // Medium risks
-    }
-    
-    // Only if risks are low, use the score-based labels
-    if (score >= 80) return 'Excellent'
-    if (score >= 60) return 'Good'
-    if (score >= 40) return 'Moderate'
-    return 'Needs Improvement'
+  const getRiskScoreLabel = (score: number) => {
+    // Risk score labels (20-80 scale)
+    if (score >= 55) return 'High Risk'
+    if (score >= 40) return 'Medium Risk' 
+    return 'Low Risk'
   }
 
   const getRiskDisplayName = (riskKey: string) => {
@@ -195,6 +174,31 @@ export default function ResultsDisplay({ result, onReset }: ResultsDisplayProps)
 
   const downloadReport = async () => {
     console.log('Starting comprehensive PDF download...')
+    
+    // Get user inputs from the result if available (for gap analysis)
+    const userInputs = result.productInfo ? {
+      productName: result.productInfo.productName,
+      productManagerName: result.productInfo.productManagerName,
+      productManagerEmail: result.productInfo.productManagerEmail,
+      // For gap analysis, we might not have all original inputs stored
+      // We'll add placeholders that can be filled if we have access to the original form data
+      aiModel: 'As per assessment', // This would come from the original form
+      useCase: 'As per assessment',
+      dataSensitivity: 'As per assessment', 
+      industry: 'As per assessment',
+      accuracyReq: 'As per assessment',
+      hasRiskAssessment: result.gapAnalysis ? 'yes' : 'no'
+    } : {
+      productName: 'Not specified',
+      productManagerName: 'Not specified', 
+      productManagerEmail: 'Not specified',
+      aiModel: 'Not specified',
+      useCase: 'Not specified',
+      dataSensitivity: 'Not specified',
+      industry: 'Not specified', 
+      accuracyReq: 'Not specified',
+      hasRiskAssessment: 'no'
+    }
     
     try {
       let jsPDF
@@ -257,16 +261,13 @@ export default function ResultsDisplay({ result, onReset }: ResultsDisplayProps)
       
       yPosition = 50
       
-      // Product Information Section with styling
-      pdf.setFillColor(240, 242, 247) // Light blue background
-      pdf.rect(15, yPosition - 5, pageWidth - 30, 40, 'F') // Increased height from 35 to 40
-      
+      // Product Information Section
       pdf.setFontSize(18)
       pdf.setTextColor(51, 65, 85) // Dark gray
       pdf.setFont('helvetica', 'bold')
-      pdf.text('Product Information', 20, yPosition + 5)
+      pdf.text('Product Information', 20, yPosition)
       
-      yPosition += 15
+      yPosition += 12
       pdf.setFontSize(12)
       pdf.setFont('helvetica', 'normal')
       pdf.setTextColor(71, 85, 105)
@@ -286,45 +287,67 @@ export default function ResultsDisplay({ result, onReset }: ResultsDisplayProps)
         yPosition += 6
       })
       
-      yPosition += 10
+      yPosition += 12
       
-      // Overall Assessment Section with styling
+      // System Configuration Section
       checkAddPage(40)
-      pdf.setFontSize(18)
+      pdf.setFontSize(16)
       pdf.setFont('helvetica', 'bold')
-      pdf.setTextColor(51, 65, 85) // Dark grey text
-      const overallAssessmentText = 'Overall Assessment'
-      const overallAssessmentWidth = pdf.getTextWidth(overallAssessmentText)
+      pdf.setTextColor(51, 65, 85)
+      pdf.text('System Configuration', 20, yPosition)
       
-      pdf.setFillColor(240, 242, 247) // Light grey background
-      pdf.rect(15, yPosition - 3, overallAssessmentWidth + 20, 20, 'F') // Dynamic width + padding, proper height
+      yPosition += 12
+      pdf.setFontSize(12)
+      pdf.setTextColor(71, 85, 105)
+      pdf.setFont('helvetica', 'normal')
       
-      pdf.text(overallAssessmentText, 20, yPosition + 8)
+      // Add user's system configuration based on form data
+      const systemConfig = [
+        ['AI Model Type:', userInputs.aiModel || 'Not specified'],
+        ['Use Case:', userInputs.useCase || 'Not specified'],
+        ['Data Sensitivity:', userInputs.dataSensitivity || 'Not specified'],
+        ['Industry:', userInputs.industry || 'Not specified'],
+        ['Accuracy Requirements:', userInputs.accuracyReq || 'Not specified'],
+        ['Prior Risk Assessment:', userInputs.hasRiskAssessment === 'yes' ? 'Yes - Gap Analysis Conducted' : 'No - Standard Assessment']
+      ]
       
-      yPosition += 15
+      systemConfig.forEach(([label, value]) => {
+        pdf.setFont('helvetica', 'bold')
+        pdf.text(label, 25, yPosition)
+        pdf.setFont('helvetica', 'normal')
+        // Handle long text wrapping
+        const wrappedValue = pdf.splitTextToSize(value, pageWidth - 90)
+        pdf.text(wrappedValue, 80, yPosition)
+        yPosition += wrappedValue.length * 6
+      })
+      
+      yPosition += 12
+      
+      // Overall Assessment Section
+      checkAddPage(30)
+      pdf.setFontSize(16)
+      pdf.setFont('helvetica', 'bold')
+      pdf.setTextColor(51, 65, 85)
+      pdf.text('Overall Assessment', 20, yPosition)
+      
+      yPosition += 12
       pdf.setFontSize(14)
       pdf.setTextColor(51, 65, 85)
       pdf.setFont('helvetica', 'bold')
-      pdf.text(`Compliance Score: ${result.overallScore}/100`, 25, yPosition)
+      pdf.text(`Risk Score: ${result.overallRiskScore}/80`, 25, yPosition)
       yPosition += 8
-      pdf.text(`Compliance Level: ${getScoreLabel(result.overallScore)}`, 25, yPosition)
+      pdf.text(`Risk Level: ${getRiskScoreLabel(result.overallRiskScore)}`, 25, yPosition)
       
-      yPosition += 20
+      yPosition += 15
       
-      // Risk Assessment Section with styling
-      checkAddPage(50)
+      // Risk Assessment Section
+      checkAddPage(40)
       pdf.setFontSize(16)
       pdf.setFont('helvetica', 'bold')
-      pdf.setTextColor(51, 65, 85) // Dark grey text
-      const riskAssessmentText = 'Risk Assessment Breakdown'
-      const riskAssessmentWidth = pdf.getTextWidth(riskAssessmentText)
+      pdf.setTextColor(51, 65, 85)
+      pdf.text('Risk Assessment Breakdown', 20, yPosition)
       
-      pdf.setFillColor(240, 242, 247) // Light grey background
-      pdf.rect(15, yPosition - 3, riskAssessmentWidth + 20, 18, 'F') // Dynamic width + padding, proper height
-      
-      pdf.text(riskAssessmentText, 20, yPosition + 8)
-      
-      yPosition += 25
+      yPosition += 15
       
       Object.entries(result.riskScores).forEach(([riskKey, score]) => {
         checkAddPage(25)
@@ -332,7 +355,7 @@ export default function ResultsDisplay({ result, onReset }: ResultsDisplayProps)
         
         // Risk box with subtle color coding
         let bgColor = [144, 238, 144] // Light green for low risk (much lighter)
-        if (score >= 70) bgColor = [255, 182, 193] // Light pink for high risk (much lighter)
+        if (score >= 55) bgColor = [255, 182, 193] // Light pink for high risk (much lighter)
         else if (score >= 40) bgColor = [255, 218, 185] // Light peach for medium risk (much lighter)
         
         pdf.setFillColor(bgColor[0], bgColor[1], bgColor[2])
@@ -352,21 +375,15 @@ export default function ResultsDisplay({ result, onReset }: ResultsDisplayProps)
         yPosition += 25
       })
       
-      // Assessment Scope with styling
+      // Assessment Scope
       if (result.assessedRisks && result.assessedRisks.length > 0) {
-        checkAddPage(30)
+        checkAddPage(25)
         pdf.setFontSize(16)
         pdf.setFont('helvetica', 'bold')
-        pdf.setTextColor(51, 65, 85) // Dark grey text
-        const assessmentScopeText = 'Assessment Scope'
-        const assessmentScopeWidth = pdf.getTextWidth(assessmentScopeText)
+        pdf.setTextColor(51, 65, 85)
+        pdf.text('Assessment Scope', 20, yPosition)
         
-        pdf.setFillColor(240, 242, 247) // Light grey background
-        pdf.rect(15, yPosition - 3, assessmentScopeWidth + 20, 18, 'F') // Dynamic width + padding, proper height
-        
-        pdf.text(assessmentScopeText, 20, yPosition + 8)
-        
-        yPosition += 20
+        yPosition += 12
         pdf.setFontSize(12)
         pdf.setTextColor(71, 85, 105)
         pdf.setFont('helvetica', 'normal')
@@ -374,46 +391,63 @@ export default function ResultsDisplay({ result, onReset }: ResultsDisplayProps)
         const scopeText = `This assessment focused on ${result.assessedRisks.length} applicable risk${result.assessedRisks.length > 1 ? 's' : ''}: ${result.assessedRisks.map(risk => getRiskDisplayName(risk)).join(', ')}`
         const scopeLines = pdf.splitTextToSize(scopeText, pageWidth - 50)
         pdf.text(scopeLines, 25, yPosition)
-        yPosition += scopeLines.length * 6 + 15
+        yPosition += scopeLines.length * 6 + 10
       }
       
-      // Risk Analysis Section with styling
-      checkAddPage(40)
+      // Implementation Status Section (for gap analysis)
+      if (result.gapAnalysis) {
+        checkAddPage(40)
+        pdf.setFontSize(16)
+        pdf.setFont('helvetica', 'bold')
+        pdf.setTextColor(51, 65, 85)
+        pdf.text('Implementation Status', 20, yPosition)
+        
+        yPosition += 12
+        pdf.setFontSize(12)
+        pdf.setTextColor(71, 85, 105)
+        pdf.setFont('helvetica', 'normal')
+        
+        // Summary stats
+        pdf.setFont('helvetica', 'bold')
+        pdf.text(`Controls Implemented: ${result.gapAnalysis.implementedControls}/${result.gapAnalysis.totalControls}`, 25, yPosition)
+        yPosition += 8
+        pdf.text(`Risk Reduction Achieved: ${result.gapAnalysis.riskReduction} points`, 25, yPosition)
+        yPosition += 8
+        pdf.text(`Implementation Gap: ${result.gapAnalysis.gapPercentage}%`, 25, yPosition)
+        yPosition += 10
+        
+        pdf.setFont('helvetica', 'normal')
+        pdf.text('This gap analysis shows your current implementation status against FINOS framework controls.', 25, yPosition)
+        yPosition += 6
+        pdf.text('Implemented controls have successfully reduced your risk scores from baseline levels.', 25, yPosition)
+        yPosition += 10
+      }
+      
+      // Risk Analysis Section
+      checkAddPage(30)
       pdf.setFontSize(16)
       pdf.setFont('helvetica', 'bold')
-      pdf.setTextColor(51, 65, 85) // Dark grey text
-      const riskAnalysisText = 'Risk Analysis'
-      const riskAnalysisWidth = pdf.getTextWidth(riskAnalysisText)
+      pdf.setTextColor(51, 65, 85)
+      pdf.text('Risk Analysis', 20, yPosition)
       
-      pdf.setFillColor(240, 242, 247) // Light grey background
-      pdf.rect(15, yPosition - 3, riskAnalysisWidth + 20, 18, 'F') // Dynamic width + padding, proper height
-      
-      pdf.text(riskAnalysisText, 20, yPosition + 8)
-      
-      yPosition += 25
+      yPosition += 12
       pdf.setFontSize(12)
       pdf.setTextColor(71, 85, 105)
       pdf.setFont('helvetica', 'normal')
       
       const analysisLines = pdf.splitTextToSize(result.analysis, pageWidth - 50)
       pdf.text(analysisLines, 25, yPosition)
-      yPosition += analysisLines.length * 6 + 20
+      yPosition += analysisLines.length * 6 + 12
       
-      // Risk Mitigations Section with styling
+      // Risk Mitigations Section
       if (result.riskMitigations && result.riskMitigations.length > 0) {
-        checkAddPage(50)
+        checkAddPage(40)
         pdf.setFontSize(16)
         pdf.setFont('helvetica', 'bold')
-        pdf.setTextColor(51, 65, 85) // Dark grey text
-        const riskMitigationsText = 'Risk Mitigations & Recommendations'
-        const riskMitigationsWidth = pdf.getTextWidth(riskMitigationsText)
+        pdf.setTextColor(51, 65, 85)
+        pdf.text('Risk Mitigations & Recommendations', 20, yPosition)
         
-        pdf.setFillColor(240, 242, 247) // Light grey background
-        pdf.rect(15, yPosition - 3, riskMitigationsWidth + 20, 18, 'F') // Dynamic width + padding, proper height
-        
-        pdf.text(riskMitigationsText, 20, yPosition + 8)
-        
-        yPosition += 30
+        yPosition += 15
         
         result.riskMitigations.slice(0, 5).forEach((item, index) => {
           checkAddPage(30)
@@ -439,20 +473,14 @@ export default function ResultsDisplay({ result, onReset }: ResultsDisplayProps)
         })
       }
       
-      // Framework References with styling
-      checkAddPage(40)
+      // Framework References
+      checkAddPage(30)
       pdf.setFontSize(16)
       pdf.setFont('helvetica', 'bold')
-      pdf.setTextColor(51, 65, 85) // Dark grey text
-      const frameworkReferencesText = 'FINOS Framework References'
-      const frameworkReferencesWidth = pdf.getTextWidth(frameworkReferencesText)
+      pdf.setTextColor(51, 65, 85)
+      pdf.text('FINOS Framework References', 20, yPosition)
       
-      pdf.setFillColor(240, 242, 247) // Light grey background
-      pdf.rect(15, yPosition - 3, frameworkReferencesWidth + 20, 18, 'F') // Dynamic width + padding, proper height
-      
-      pdf.text(frameworkReferencesText, 20, yPosition + 8)
-      
-      yPosition += 30
+      yPosition += 12
       pdf.setFontSize(12)
       pdf.setTextColor(71, 85, 105)
       pdf.setFont('helvetica', 'normal')
@@ -540,7 +568,7 @@ export default function ResultsDisplay({ result, onReset }: ResultsDisplayProps)
           productManagerEmail: result.productInfo?.productManagerEmail || ''
         },
         assessmentSummary: {
-          overallScore: result.overallScore,
+          overallScore: result.overallRiskScore,
           riskScores: result.riskScores,
           assessedRisks: result.assessedRisks || []
         }
@@ -585,41 +613,34 @@ export default function ResultsDisplay({ result, onReset }: ResultsDisplayProps)
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 relative overflow-hidden">
-      {/* Animated background elements */}
-      <div className="absolute inset-0">
-        <div className="absolute top-20 left-10 w-64 h-64 bg-purple-400 rounded-full mix-blend-multiply filter blur-2xl opacity-50 animate-blob"></div>
-        <div className="absolute bottom-20 right-10 w-64 h-64 bg-blue-400 rounded-full mix-blend-multiply filter blur-2xl opacity-40 animate-blob animation-delay-2000"></div>
-        <div className="absolute bottom-10 left-1/3 w-64 h-64 bg-pink-400 rounded-full mix-blend-multiply filter blur-2xl opacity-40 animate-blob animation-delay-4000"></div>
-      </div>
-
+    <div className="min-h-screen bg-gray-50">
       {/* Content */}
-      <div className="relative z-10 px-6 py-12">
+      <div className="px-6 py-12">
         <div className="max-w-4xl mx-auto">
-          <div className="backdrop-blur-md bg-white/10 rounded-3xl shadow-2xl overflow-hidden border border-white/20">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
             {/* Header */}
-            <div className="bg-gradient-to-r from-cyan-500/20 to-purple-500/20 text-white p-8 text-center border-b border-white/20">
+            <div className="bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 p-8 text-center border-b border-gray-200">
               <h2 className="text-3xl font-bold mb-2">Your AI Governance Assessment</h2>
-              <p className="text-white/80">Based on FINOS Industry Framework</p>
+              <p className="text-gray-600">Based on FINOS Industry Framework</p>
             </div>
 
             <div className="p-8">
-              {/* Overall Score */}
+              {/* Overall Risk Score */}
               <div className="text-center mb-8">
-                <div className={`inline-flex items-center justify-center w-32 h-32 rounded-full text-3xl font-bold ${getScoreColor(result.overallScore)}`}>
-                  {result.overallScore}
+                <div className={`inline-flex items-center justify-center w-32 h-32 rounded-full text-3xl font-bold ${getRiskScoreColor(result.overallRiskScore)}`}>
+                  {result.overallRiskScore}
                 </div>
-                <h3 className="text-2xl font-semibold mt-4 mb-2 text-white">
-                  {getScoreLabel(result.overallScore)}
+                <h3 className="text-2xl font-semibold mt-4 mb-2 text-gray-900">
+                  {getRiskScoreLabel(result.overallRiskScore)}
                 </h3>
-                <p className="text-white/70">Overall FINOS Framework Score</p>
+                <p className="text-gray-600">Overall Risk Score</p>
               </div>
 
               {/* Assessment Info */}
               {result.assessedRisks && result.assessedRisks.length > 0 && (
-                <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-400/30 rounded-lg p-4 mb-8 backdrop-blur-sm">
-                  <h4 className="font-semibold text-purple-200 mb-2">Assessment Scope</h4>
-                  <p className="text-purple-100 text-sm">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8">
+                  <h4 className="font-semibold text-blue-800 mb-2">Assessment Scope</h4>
+                  <p className="text-blue-700 text-sm">
                     This assessment focused on {result.assessedRisks.length} applicable risk{result.assessedRisks.length > 1 ? 's' : ''}: {' '}
                     {result.assessedRisks.map(risk => getRiskDisplayName(risk)).join(', ')}
                   </p>
@@ -631,12 +652,13 @@ export default function ResultsDisplay({ result, onReset }: ResultsDisplayProps)
                 {Object.entries(result.riskScores).map(([riskKey, score]) => {
                   const riskLevel = getRiskLevel(score)
                   return (
-                    <div key={riskKey} className="backdrop-blur-md bg-white/10 rounded-lg p-6 text-center border border-white/20">
+                    <div key={riskKey} className="bg-gray-50 rounded-lg p-6 text-center border border-gray-200">
                       <div className={`inline-flex items-center justify-center w-20 h-20 rounded-full text-sm font-bold mb-4 ${riskLevel.color}`}>
-                        {riskLevel.level}
+                        {score}
                       </div>
-                      <h4 className="font-semibold mb-2 text-white">{getRiskDisplayName(riskKey)}</h4>
-                      <p className="text-sm text-white/70">{getRiskDescription(riskKey)}</p>
+                      <h4 className="font-semibold mb-2 text-gray-900">{getRiskDisplayName(riskKey)}</h4>
+                      <p className="text-sm text-gray-600">{getRiskDescription(riskKey)}</p>
+                      <p className="text-xs text-gray-500 mt-1">{riskLevel.level}</p>
                     </div>
                   )
                 })}
@@ -644,12 +666,12 @@ export default function ResultsDisplay({ result, onReset }: ResultsDisplayProps)
                 {/* Fill remaining slots if less than 3 risks assessed */}
                 {Object.keys(result.riskScores).length < 3 && 
                   Array(3 - Object.keys(result.riskScores).length).fill(null).map((_, index) => (
-                    <div key={`placeholder-${index}`} className="backdrop-blur-md bg-white/5 rounded-lg p-6 text-center opacity-50 border border-white/10">
-                      <div className="inline-flex items-center justify-center w-16 h-16 rounded-full text-xl font-bold mb-4 bg-white/20 text-white/40">
+                    <div key={`placeholder-${index}`} className="bg-gray-100 rounded-lg p-6 text-center opacity-50 border border-gray-200">
+                      <div className="inline-flex items-center justify-center w-16 h-16 rounded-full text-xl font-bold mb-4 bg-gray-300 text-gray-500">
                         N/A
                       </div>
-                      <h4 className="font-semibold mb-2 text-white/40">Not Applicable</h4>
-                      <p className="text-sm text-white/30">Risk not assessed for this system</p>
+                      <h4 className="font-semibold mb-2 text-gray-500">Not Applicable</h4>
+                      <p className="text-sm text-gray-400">Risk not assessed for this system</p>
                     </div>
                   ))
                 }
@@ -657,29 +679,29 @@ export default function ResultsDisplay({ result, onReset }: ResultsDisplayProps)
 
               {/* Analysis */}
               <div className="mb-8">
-                <h4 className="text-xl font-semibold mb-4 flex items-center text-white">
+                <h4 className="text-xl font-semibold mb-4 flex items-center text-gray-900">
                   <span className="mr-2">🔍</span>
                   Risk Analysis
                 </h4>
-                <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 border-l-4 border-purple-400 p-6 rounded-r-lg backdrop-blur-sm border border-purple-400/30">
-                  <p className="text-white/90 leading-relaxed">{result.analysis}</p>
+                <div className="bg-gray-50 border-l-4 border-gray-400 p-6 rounded-r-lg border border-gray-200">
+                  <p className="text-gray-800 leading-relaxed">{result.analysis}</p>
                 </div>
               </div>
 
               {/* Risk Assessment & Mitigations Table - Enhanced with Risk Factors */}
               <div className="mb-8">
-                <h4 className="text-xl font-semibold mb-4 flex items-center text-white">
+                <h4 className="text-xl font-semibold mb-4 flex items-center text-gray-900">
                   <span className="mr-2">🎯</span>
                   Risk Assessment & Mitigations
                 </h4>
-                <div className="backdrop-blur-md bg-white/10 rounded-lg border border-white/20 overflow-hidden">
+                <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
-                        <tr className="bg-gradient-to-r from-cyan-500/20 to-purple-500/20 border-b border-white/20">
-                          <th className="text-left p-4 text-white font-semibold">Risk</th>
-                          <th className="text-left p-4 text-white font-semibold">Mitigation</th>
-                          <th className="text-left p-4 text-white font-semibold">Summary</th>
+                        <tr className="bg-gray-100 border-b border-gray-200">
+                          <th className="text-left p-4 text-gray-900 font-semibold">Risk</th>
+                          <th className="text-left p-4 text-gray-900 font-semibold">Mitigation</th>
+                          <th className="text-left p-4 text-gray-900 font-semibold">Summary</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -690,32 +712,32 @@ export default function ResultsDisplay({ result, onReset }: ResultsDisplayProps)
                           )
                           
                           return (
-                            <tr key={index} className="border-b border-white/10 hover:bg-white/5 transition-colors">
+                            <tr key={index} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                               <td className="p-4">
                                 <div className="mb-3">
-                                  <div className="text-cyan-300 font-medium text-sm">{item.riskId}</div>
-                                  <div className="text-white/90 font-semibold">{item.riskName}</div>
+                                  <div className="text-blue-600 font-medium text-sm">{item.riskId}</div>
+                                  <div className="text-gray-900 font-semibold">{item.riskName}</div>
                                 </div>
                               </td>
                               <td className="p-4">
                                 <div>
-                                  <div className="text-cyan-300 font-medium text-sm">{item.mitigationId}</div>
+                                  <div className="text-blue-600 font-medium text-sm">{item.mitigationId}</div>
                                   {frameworkData?.mitigationUrls?.[item.mitigationId] ? (
                                     <a
                                       href={frameworkData.mitigationUrls[item.mitigationId]}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="text-white/90 font-semibold hover:text-cyan-300 hover:underline transition-colors cursor-pointer"
+                                      className="text-gray-900 font-semibold hover:text-blue-600 hover:underline transition-colors cursor-pointer"
                                       title={`View ${item.mitigationName} details on FINOS framework`}
                                     >
                                       {item.mitigationName}
                                     </a>
                                   ) : (
-                                    <div className="text-white/90 font-semibold">{item.mitigationName}</div>
+                                    <div className="text-gray-900 font-semibold">{item.mitigationName}</div>
                                   )}
                                 </div>
                               </td>
-                              <td className="p-4 text-white/80">{item.summary}</td>
+                              <td className="p-4 text-gray-700">{item.summary}</td>
                             </tr>
                           )
                         })}
@@ -726,13 +748,13 @@ export default function ResultsDisplay({ result, onReset }: ResultsDisplayProps)
               </div>
 
               {/* FINOS Framework References - Enhanced */}
-              <div className="backdrop-blur-md bg-white/10 rounded-lg p-6 mb-8 border border-white/20">
-                <h4 className="text-lg font-semibold mb-4 text-white">Referenced FINOS Framework</h4>
+              <div className="bg-gray-50 rounded-lg p-6 mb-8 border border-gray-200">
+                <h4 className="text-lg font-semibold mb-4 text-gray-900">Referenced FINOS Framework</h4>
                 
                 {/* Show assessed FINOS risks */}
                 {result.assessedRisks && result.assessedRisks.length > 0 && (
                   <div className="mb-6">
-                    <h5 className="font-medium text-white/90 mb-3">Assessed Risk Categories:</h5>
+                    <h5 className="font-medium text-gray-800 mb-3">Assessed Risk Categories:</h5>
                     <div className="flex flex-wrap gap-2">
                       {result.assessedRisks.map(risk => {
                         const riskInfo = {
@@ -763,7 +785,7 @@ export default function ResultsDisplay({ result, onReset }: ResultsDisplayProps)
                             href={riskInfo.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-block bg-gradient-to-r from-purple-500/30 to-pink-500/30 text-purple-200 px-3 py-1 rounded-full text-sm font-medium hover:bg-gradient-to-r hover:from-purple-500/40 hover:to-pink-500/40 transition-colors"
+                            className="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium hover:bg-blue-200 transition-colors"
                             title={riskInfo.name}
                           >
                             {riskInfo.id}: {riskInfo.name}
@@ -775,54 +797,54 @@ export default function ResultsDisplay({ result, onReset }: ResultsDisplayProps)
                 )}
                 
                 {/* External framework references */}
-                <h5 className="font-medium text-white/90 mb-3">External Standards:</h5>
+                <h5 className="font-medium text-gray-800 mb-3">External Standards:</h5>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                   <a 
                     href={frameworkRefs.owasp.url}
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="text-center hover:bg-white/10 p-3 rounded-lg transition-colors cursor-pointer group"
+                    className="text-center hover:bg-gray-100 p-3 rounded-lg transition-colors cursor-pointer group"
                     title={frameworkRefs.owasp.description}
                   >
                     <div className="text-2xl mb-1">📋</div>
-                    <div className="font-medium text-cyan-300 group-hover:text-cyan-100">OWASP LLM</div>
-                    <div className="text-white/70">Referenced</div>
+                    <div className="font-medium text-gray-700 group-hover:text-gray-900">OWASP LLM</div>
+                    <div className="text-gray-500">Referenced</div>
                   </a>
                   
                   <a 
                     href={frameworkRefs.ffiec.url}
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="text-center hover:bg-white/10 p-3 rounded-lg transition-colors cursor-pointer group"
+                    className="text-center hover:bg-gray-100 p-3 rounded-lg transition-colors cursor-pointer group"
                     title={frameworkRefs.ffiec.description}
                   >
                     <div className="text-2xl mb-1">🏛️</div>
-                    <div className="font-medium text-cyan-300 group-hover:text-cyan-100">FFIEC</div>
-                    <div className="text-white/70">Aligned</div>
+                    <div className="font-medium text-gray-700 group-hover:text-gray-900">FFIEC</div>
+                    <div className="text-gray-500">Aligned</div>
                   </a>
                   
                   <a 
                     href={frameworkRefs.euAiAct.url}
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="text-center hover:bg-white/10 p-3 rounded-lg transition-colors cursor-pointer group"
+                    className="text-center hover:bg-gray-100 p-3 rounded-lg transition-colors cursor-pointer group"
                     title={frameworkRefs.euAiAct.description}
                   >
                     <div className="text-2xl mb-1">🇪🇺</div>
-                    <div className="font-medium text-cyan-300 group-hover:text-cyan-100">EU AI Act</div>
-                    <div className="text-white/70">Considered</div>
+                    <div className="font-medium text-gray-700 group-hover:text-gray-900">EU AI Act</div>
+                    <div className="text-gray-500">Considered</div>
                   </a>
                   
                   <a 
                     href={frameworkRefs.nist.url}
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="text-center hover:bg-white/10 p-3 rounded-lg transition-colors cursor-pointer group"
+                    className="text-center hover:bg-gray-100 p-3 rounded-lg transition-colors cursor-pointer group"
                     title={frameworkRefs.nist.description}
                   >
                     <div className="text-2xl mb-1">🛡️</div>
-                    <div className="font-medium text-cyan-300 group-hover:text-cyan-100">NIST AI RMF</div>
-                    <div className="text-white/70">Referenced</div>
+                    <div className="font-medium text-gray-700 group-hover:text-gray-900">NIST AI RMF</div>
+                    <div className="text-gray-500">Referenced</div>
                   </a>
                 </div>
               </div>
@@ -831,7 +853,7 @@ export default function ResultsDisplay({ result, onReset }: ResultsDisplayProps)
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <button
                 onClick={downloadReport}
-                className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white rounded-lg hover:from-emerald-600 hover:to-cyan-600 transition-all flex items-center justify-center shadow-lg hover:shadow-xl transform hover:scale-105"
+                className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-all flex items-center justify-center shadow-sm hover:shadow-md"
                 >
                 <span className="mr-2">📄</span>
                 Download PDF Report
@@ -840,12 +862,12 @@ export default function ResultsDisplay({ result, onReset }: ResultsDisplayProps)
                 <button
                   onClick={emailReport}
                   disabled={isEmailSending || !result.productInfo?.productManagerEmail}
-                  className={`px-6 py-3 rounded-lg transition-all flex items-center justify-center shadow-lg hover:shadow-xl transform hover:scale-105 ${
+                  className={`px-6 py-3 rounded-lg transition-all flex items-center justify-center shadow-sm hover:shadow-md ${
                     isEmailSending
-                      ? 'bg-gray-500 cursor-not-allowed'
-                      : !result.productInfo?.productManagerEmail
                       ? 'bg-gray-400 cursor-not-allowed'
-                      : 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white hover:from-purple-600 hover:to-indigo-600'
+                      : !result.productInfo?.productManagerEmail
+                      ? 'bg-gray-300 cursor-not-allowed'
+                      : 'bg-blue-600 hover:bg-blue-700 text-white'
                   }`}
                 >
                   {isEmailSending ? (
@@ -863,7 +885,7 @@ export default function ResultsDisplay({ result, onReset }: ResultsDisplayProps)
                 
                 <button
                   onClick={onReset}
-                  className="px-6 py-3 bg-gradient-to-r from-slate-500 to-slate-600 text-white rounded-lg hover:from-slate-600 hover:to-slate-700 transition-all flex items-center justify-center shadow-lg hover:shadow-xl transform hover:scale-105"
+                  className="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-all flex items-center justify-center shadow-sm hover:shadow-md"
                 >
                   <span className="mr-2">🔄</span>
                   New Assessment
@@ -874,16 +896,16 @@ export default function ResultsDisplay({ result, onReset }: ResultsDisplayProps)
               {emailStatus && (
                 <div className={`mt-4 p-4 rounded-lg text-center font-medium ${
                   emailStatus.includes('✅') 
-                    ? 'bg-green-500/20 border border-green-400/50 text-green-100'
-                    : 'bg-red-500/20 border border-red-400/50 text-red-100'
+                    ? 'bg-green-50 border border-green-200 text-green-800'
+                    : 'bg-red-50 border border-red-200 text-red-800'
                 }`}>
                   {emailStatus}
                 </div>
               )}
 
               {/* Footer */}
-              <div className="text-center mt-8 pt-6 border-t border-white/20">
-                <p className="text-sm text-white/70">
+              <div className="text-center mt-8 pt-6 border-t border-gray-200">
+                <p className="text-sm text-gray-500">
                   Assessment powered by FINOS AI Governance Framework • 
                   <span className="ml-1">Generated on {new Date().toLocaleDateString()}</span>
                 </p>
