@@ -317,7 +317,8 @@ Respond with this exact JSON structure:
         productName: userInputs.productName,
         productManagerName: userInputs.productManagerName,
         productManagerEmail: userInputs.productManagerEmail
-      }
+      },
+      userInputs: userInputs
     },
     tokensUsed: completion.usage?.total_tokens || 0,
     assessedRisks: applicableRisks,
@@ -530,7 +531,9 @@ Provide only the analysis text, no additional formatting.`
         productName: userInputs.productName,
         productManagerName: userInputs.productManagerName,
         productManagerEmail: userInputs.productManagerEmail
-      }
+      },
+      userInputs: userInputs,
+      checklistData: checklistData
     },
     tokensUsed: 0, // Minimal tokens used for analysis generation
     assessedRisks: applicableRisks,

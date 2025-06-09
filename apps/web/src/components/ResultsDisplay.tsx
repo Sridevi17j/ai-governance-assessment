@@ -49,6 +49,28 @@ interface ResultsDisplayProps {
       productManagerName: string
       productManagerEmail: string
     }
+    userInputs?: {
+      productName: string
+      productManagerName: string
+      productManagerEmail: string
+      aiModel: string
+      useCase: string
+      dataSensitivity: string
+      industry: string
+      accuracyReq: string
+      hasRiskAssessment: string
+    }
+    checklistData?: {
+      hallucination: Array<{ questionId: number; answer: string }>
+      promptInjection: Array<{ questionId: number; answer: string }>
+      dataLeakage: Array<{ questionId: number; answer: string }>
+    }
+    gapAnalysis?: {
+      implementedControls: number
+      totalControls: number
+      gapPercentage: number
+      riskReduction: number
+    }
   }
   onReset: () => void
 }
@@ -175,20 +197,8 @@ export default function ResultsDisplay({ result, onReset }: ResultsDisplayProps)
   const downloadReport = async () => {
     console.log('Starting comprehensive PDF download...')
     
-    // Get user inputs from the result if available (for gap analysis)
-    const userInputs = result.productInfo ? {
-      productName: result.productInfo.productName,
-      productManagerName: result.productInfo.productManagerName,
-      productManagerEmail: result.productInfo.productManagerEmail,
-      // For gap analysis, we might not have all original inputs stored
-      // We'll add placeholders that can be filled if we have access to the original form data
-      aiModel: 'As per assessment', // This would come from the original form
-      useCase: 'As per assessment',
-      dataSensitivity: 'As per assessment', 
-      industry: 'As per assessment',
-      accuracyReq: 'As per assessment',
-      hasRiskAssessment: result.gapAnalysis ? 'yes' : 'no'
-    } : {
+    // Get user inputs from the result
+    const userInputs = result.userInputs || {
       productName: 'Not specified',
       productManagerName: 'Not specified', 
       productManagerEmail: 'Not specified',
@@ -198,6 +208,38 @@ export default function ResultsDisplay({ result, onReset }: ResultsDisplayProps)
       industry: 'Not specified', 
       accuracyReq: 'Not specified',
       hasRiskAssessment: 'no'
+    }
+    
+    // Helper function to convert form values to display names
+    const getDisplayValue = (field: string, value: string) => {
+      const mappings: Record<string, Record<string, string>> = {
+        aiModel: {
+          'selfHosted': 'Self-Hosted',
+          'apiBased': 'API Based (OpenAI, Anthropic, etc.)',
+          'thirdParty': 'Third-Party Cloud (AWS, Azure, GCP)'
+        },
+        useCase: {
+          'customerService': 'Customer Service & Support',
+          'documentAnalysis': 'Document Analysis & Processing',
+          'codeGeneration': 'Code Generation & Development',
+          'dataAnalysis': 'Data Analysis & Insights',
+          'contentGeneration': 'Content Creation & Marketing',
+          'decisionSupport': 'Decision Support Systems'
+        },
+        dataSensitivity: {
+          'public': 'Public',
+          'internal': 'Internal',
+          'confidential': 'Confidential',
+          'restricted': 'Restricted (PII, Financial, Regulated)'
+        },
+        accuracyReq: {
+          'low': 'Low',
+          'moderate': 'Moderate',
+          'high': 'High',
+          'critical': 'Critical'
+        }
+      }
+      return mappings[field]?.[value] || value
     }
     
     try {
@@ -303,11 +345,11 @@ export default function ResultsDisplay({ result, onReset }: ResultsDisplayProps)
       
       // Add user's system configuration based on form data
       const systemConfig = [
-        ['AI Model Type:', userInputs.aiModel || 'Not specified'],
-        ['Use Case:', userInputs.useCase || 'Not specified'],
-        ['Data Sensitivity:', userInputs.dataSensitivity || 'Not specified'],
+        ['AI Model Type:', getDisplayValue('aiModel', userInputs.aiModel) || 'Not specified'],
+        ['Use Case:', getDisplayValue('useCase', userInputs.useCase) || 'Not specified'],
+        ['Data Sensitivity:', getDisplayValue('dataSensitivity', userInputs.dataSensitivity) || 'Not specified'],
         ['Industry:', userInputs.industry || 'Not specified'],
-        ['Accuracy Requirements:', userInputs.accuracyReq || 'Not specified'],
+        ['Accuracy Requirements:', getDisplayValue('accuracyReq', userInputs.accuracyReq) || 'Not specified'],
         ['Prior Risk Assessment:', userInputs.hasRiskAssessment === 'yes' ? 'Yes - Gap Analysis Conducted' : 'No - Standard Assessment']
       ]
       
@@ -421,6 +463,77 @@ export default function ResultsDisplay({ result, onReset }: ResultsDisplayProps)
         yPosition += 6
         pdf.text('Implemented controls have successfully reduced your risk scores from baseline levels.', 25, yPosition)
         yPosition += 10
+      }
+      
+      // Risk Controls Already Implemented Section (only for gap analysis)
+      if (result.checklistData && result.gapAnalysis) {
+        checkAddPage(40)
+        pdf.setFontSize(16)
+        pdf.setFont('helvetica', 'bold')
+        pdf.setTextColor(51, 65, 85)
+        pdf.text('Risk Controls Already Implemented', 20, yPosition)
+        
+        yPosition += 12
+        pdf.setFontSize(12)
+        pdf.setTextColor(71, 85, 105)
+        pdf.setFont('helvetica', 'normal')
+        
+        // Helper function to get short control name
+        const getShortControlName = (questionId: number) => {
+          const controlNames: Record<number, string> = {
+            1: 'Human-in-the-loop review',
+            2: 'Output accuracy testing',
+            3: 'Training data verification',
+            4: 'Deterministic prompt testing',
+            5: 'RAG with verified sources',
+            6: 'User warnings for speculation',
+            7: 'Hallucination benchmark testing',
+            8: 'Input sanitization',
+            9: 'Jailbreak vulnerability testing',
+            10: 'System prompt guardrails',
+            11: 'Input monitoring and logging',
+            12: 'Restricted prompt control',
+            13: 'Validated prompt-building logic',
+            14: 'Third-party injection detection',
+            15: 'Data classification for LLM inputs',
+            16: 'PII masking and redaction',
+            17: 'Hosted model contract review',
+            18: 'Inference log monitoring',
+            19: 'In-house models for sensitive data',
+            20: 'Encrypted vector store with RBAC',
+            21: 'Smart routing to private LLMs'
+          }
+          return controlNames[questionId] || `Control ${questionId}`
+        }
+        
+        // Get all "Yes" responses
+        const implementedControls: string[] = []
+        
+        // Check each category for "yes" answers
+        Object.entries(result.checklistData).forEach(([category, responses]) => {
+          responses.forEach(response => {
+            if (response.answer === 'yes') {
+              implementedControls.push(getShortControlName(response.questionId))
+            }
+          })
+        })
+        
+        if (implementedControls.length > 0) {
+          pdf.text('The following risk controls have been successfully implemented:', 25, yPosition)
+          yPosition += 10
+          
+          implementedControls.forEach((control, index) => {
+            checkAddPage(10)
+            pdf.setFont('helvetica', 'normal')
+            pdf.text(`${index + 1}. ${control}`, 30, yPosition)
+            yPosition += 6
+          })
+          
+          yPosition += 10
+        } else {
+          pdf.text('No controls have been implemented yet - this represents an opportunity for risk reduction.', 25, yPosition)
+          yPosition += 10
+        }
       }
       
       // Risk Analysis Section
