@@ -291,13 +291,13 @@ export default function ResultsDisplay({ result, onReset }: ResultsDisplayProps)
       pdf.setFontSize(28)
       pdf.setTextColor(255, 255, 255) // White text
       pdf.setFont('helvetica', 'bold')
-      const title = 'FINOS AI Governance Assessment Report'
+      const title = 'FinAIReadiness - Assessment Report'
       const titleWidth = pdf.getTextWidth(title)
       pdf.text(title, (pageWidth - titleWidth) / 2, 22)
       
       pdf.setFontSize(14)
       pdf.setFont('helvetica', 'normal')
-      const subtitle = 'Based on Industry-Standard FINOS Framework'
+      const subtitle = 'Based on Industry-Standard Framework'
       const subtitleWidth = pdf.getTextWidth(subtitle)
       pdf.text(subtitle, (pageWidth - subtitleWidth) / 2, 30)
       
@@ -376,7 +376,7 @@ export default function ResultsDisplay({ result, onReset }: ResultsDisplayProps)
       pdf.setFontSize(14)
       pdf.setTextColor(51, 65, 85)
       pdf.setFont('helvetica', 'bold')
-      pdf.text(`Risk Score: ${result.overallRiskScore}/80`, 25, yPosition)
+      pdf.text(`Risk Score: ${Math.round((result.overallRiskScore / 100) * 100)}%`, 25, yPosition)
       yPosition += 8
       pdf.text(`Risk Level: ${getRiskScoreLabel(result.overallRiskScore)}`, 25, yPosition)
       
@@ -733,15 +733,15 @@ export default function ResultsDisplay({ result, onReset }: ResultsDisplayProps)
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
             {/* Header */}
             <div className="bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 p-8 text-center border-b border-gray-200">
-              <h2 className="text-3xl font-bold mb-2">Your AI Governance Assessment</h2>
-              <p className="text-gray-600">Based on FINOS Industry Framework</p>
+              <h2 className="text-3xl font-bold mb-2">AI Risk Assessment Report</h2>
+              <p className="text-gray-600">In alignment with Industry framework</p>
             </div>
 
-            <div className="p-8">
+            <div className="p-6">
               {/* Overall Risk Score */}
-              <div className="text-center mb-8">
-                <div className={`inline-flex items-center justify-center w-32 h-32 rounded-full text-3xl font-bold ${getRiskScoreColor(result.overallRiskScore)}`}>
-                  {result.overallRiskScore}
+              <div className="text-center mb-6">
+                <div className={`inline-flex items-center justify-center w-24 h-24 rounded-full text-2xl font-bold ${getRiskScoreColor(result.overallRiskScore)}`}>
+                  {Math.round((result.overallRiskScore / 100) * 100)}%
                 </div>
                 <h3 className="text-2xl font-semibold mt-4 mb-2 text-gray-900">
                   {getRiskScoreLabel(result.overallRiskScore)}
@@ -751,7 +751,7 @@ export default function ResultsDisplay({ result, onReset }: ResultsDisplayProps)
 
               {/* Assessment Info */}
               {result.assessedRisks && result.assessedRisks.length > 0 && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-6">
                   <h4 className="font-semibold text-blue-800 mb-2">Assessment Scope</h4>
                   <p className="text-blue-700 text-sm">
                     This assessment focused on {result.assessedRisks.length} applicable risk{result.assessedRisks.length > 1 ? 's' : ''}: {' '}
@@ -761,13 +761,13 @@ export default function ResultsDisplay({ result, onReset }: ResultsDisplayProps)
               )}
 
               {/* Risk Breakdown - Show Risk Levels */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 {Object.entries(result.riskScores).map(([riskKey, score]) => {
                   const riskLevel = getRiskLevel(score)
                   return (
-                    <div key={riskKey} className="bg-gray-50 rounded-lg p-6 text-center border border-gray-200">
-                      <div className={`inline-flex items-center justify-center w-20 h-20 rounded-full text-sm font-bold mb-4 ${riskLevel.color}`}>
-                        {score}
+                    <div key={riskKey} className="bg-gray-50 rounded-lg p-4 text-center border border-gray-200">
+                      <div className={`inline-flex items-center justify-center w-20 h-20 rounded-full text-lg font-bold mb-4 ${riskLevel.color}`}>
+                        {Math.round((score / 100) * 100)}%
                       </div>
                       <h4 className="font-semibold mb-2 text-gray-900">{getRiskDisplayName(riskKey)}</h4>
                       <p className="text-sm text-gray-600">{getRiskDescription(riskKey)}</p>
@@ -776,18 +776,22 @@ export default function ResultsDisplay({ result, onReset }: ResultsDisplayProps)
                   )
                 })}
                 
-                {/* Fill remaining slots if less than 3 risks assessed */}
-                {Object.keys(result.riskScores).length < 3 && 
-                  Array(3 - Object.keys(result.riskScores).length).fill(null).map((_, index) => (
-                    <div key={`placeholder-${index}`} className="bg-gray-100 rounded-lg p-6 text-center opacity-50 border border-gray-200">
+                {/* Show not applicable risks with specific names */}
+                {(() => {
+                  const allPossibleRisks = ['hallucination', 'promptInjection', 'dataLeakage']
+                  const assessedRisks = Object.keys(result.riskScores)
+                  const notApplicableRisks = allPossibleRisks.filter(risk => !assessedRisks.includes(risk))
+                  
+                  return notApplicableRisks.map((riskKey) => (
+                    <div key={`na-${riskKey}`} className="bg-gray-100 rounded-lg p-4 text-center opacity-50 border border-gray-200">
                       <div className="inline-flex items-center justify-center w-16 h-16 rounded-full text-xl font-bold mb-4 bg-gray-300 text-gray-500">
                         N/A
                       </div>
-                      <h4 className="font-semibold mb-2 text-gray-500">Not Applicable</h4>
+                      <h4 className="font-semibold mb-2 text-gray-500">{getRiskDisplayName(riskKey)}</h4>
                       <p className="text-sm text-gray-400">Risk not assessed for this system</p>
                     </div>
                   ))
-                }
+                })()}
               </div>
 
               {/* Analysis */}
@@ -1019,8 +1023,7 @@ export default function ResultsDisplay({ result, onReset }: ResultsDisplayProps)
               {/* Footer */}
               <div className="text-center mt-8 pt-6 border-t border-gray-200">
                 <p className="text-sm text-gray-500">
-                  Assessment powered by FINOS AI Governance Framework • 
-                  <span className="ml-1">Generated on {new Date().toLocaleDateString()}</span>
+                  Risk Assessment Report Generated on {new Date().toLocaleDateString()}
                 </p>
               </div>
             </div>

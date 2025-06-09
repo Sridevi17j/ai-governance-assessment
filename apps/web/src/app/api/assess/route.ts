@@ -165,8 +165,30 @@ function getCategoryDisplayName(category: string): string {
 
 // Handle standard assessment for users who haven't conducted risk assessment
 async function handleStandardAssessment(userInputs: any, applicableRisks: string[], frameworks: any) {
-  // Calculate base risk score (20-80 range) based on system configuration
-  const baseRiskScore = calculateBaseRiskScore(userInputs, applicableRisks)
+  // Calculate individual risk scores first
+  const individualRiskScores: Record<string, number> = {}
+  
+  applicableRisks.forEach(risk => {
+    const baseScore = calculateBaseRiskScore(userInputs, [risk])
+    
+    // Adjust base score for specific risk categories
+    if (risk === 'dataLeakage' && (userInputs.aiModel === 'thirdParty' || userInputs.aiModel === 'apiBased')) {
+      individualRiskScores[risk] = Math.min(75, baseScore + 15)
+    } else if (risk === 'hallucination' && userInputs.accuracyReq === 'critical') {
+      individualRiskScores[risk] = Math.min(80, baseScore + 20)
+    } else if (risk === 'promptInjection' && userInputs.useCase === 'customerService') {
+      individualRiskScores[risk] = Math.min(70, baseScore + 10)
+    } else {
+      individualRiskScores[risk] = baseScore
+    }
+    
+    // Ensure within 20-80 range
+    individualRiskScores[risk] = Math.max(20, Math.min(80, individualRiskScores[risk]))
+  })
+  
+  // Calculate overall risk score as average of individual scores
+  const avgRiskScore = Object.values(individualRiskScores).reduce((a, b) => a + b, 0) / Object.values(individualRiskScores).length
+  const overallRiskScore = Math.max(20, Math.min(80, Math.round(avgRiskScore)))
   
   const prompt = `You are an AI governance expert using the official FINOS AI Governance Framework. You must verify the user's AI system against the applicable FINOS framework criteria and provide a risk assessment.
 
@@ -187,18 +209,20 @@ VERIFICATION & ASSESSMENT PROCESS:
 4. SCORE: Provide accurate scores within realistic ranges
 
 REQUIREMENTS:
-1. Provide overall risk score (20-80) where HIGHER = HIGHER RISK. Base calculation: ${baseRiskScore}
-2. For each APPLICABLE risk category, provide RISK scores (20-80) where HIGHER = HIGHER RISK: ${applicableRisks.map(risk => {
+1. Provide overall risk score (20-80) where HIGHER = HIGHER RISK. Calculated score: ${overallRiskScore}
+2. For each APPLICABLE risk category, provide RISK scores (20-80) where HIGHER = HIGHER RISK: ${Object.entries(individualRiskScores).map(([risk, score]) => {
     const riskNames = {
       hallucination: 'Hallucination',
       promptInjection: 'Prompt Injection', 
       dataLeakage: 'Data Leakage'
     }
-    return riskNames[risk as keyof typeof riskNames] || risk
+    return `${riskNames[risk as keyof typeof riskNames] || risk}: ${score}`
   }).join(', ')}
-3. Provide detailed 4-5 sentence analysis focusing on verified framework alignment
+3. Provide detailed 4-5 sentence analysis focusing on verified framework alignment (DO NOT mention specific scores, points, or numbers)
 4. Recommend relevant FINOS mitigations after verifying system-framework alignment
 5. Reference specific examples that match the user's system configuration
+
+IMPORTANT: In your analysis, DO NOT mention specific risk scores, percentages, or point values. Use qualitative terms like "higher risk", "moderate risk", "lower risk", "significant concerns", "some level", etc.
 
 IMPORTANT: Risk scores should be realistic (20-80 range). No system has 0% or 100% risk.
 Score ranges: 20-35 (Lower Risk), 35-55 (Moderate Risk), 55-80 (Higher Risk)
@@ -207,9 +231,9 @@ CRITICAL: You must respond with ONLY valid JSON. Do not include markdown code bl
 
 Respond with this exact JSON structure:
 {
-  "overallRiskScore": number, // 20-80 where HIGHER = HIGHER RISK
+  "overallRiskScore": ${overallRiskScore}, // 20-80 where HIGHER = HIGHER RISK
   "riskScores": {
-    ${applicableRisks.map(risk => `"${risk}": number // 20-80 where HIGHER = HIGHER RISK`).join(',\n    ')}
+    ${Object.entries(individualRiskScores).map(([risk, score]) => `"${risk}": ${score} // 20-80 where HIGHER = HIGHER RISK`).join(',\n    ')}
   },
   "analysis": "Detailed 4-5 sentence analysis with specific contributing factors",
   "riskMitigations": [
@@ -275,24 +299,10 @@ Respond with this exact JSON structure:
     console.error('JSON parsing error:', parseError)
     
     // Enhanced fallback with realistic risk scoring (20-80 range)
-    const fallbackRiskScore = calculateBaseRiskScore(userInputs, applicableRisks)
-    
     assessmentResult = {
-      overallRiskScore: fallbackRiskScore,
-      riskScores: Object.fromEntries(
-        applicableRisks.map(risk => {
-          let riskScore = fallbackRiskScore
-          if (risk === 'dataLeakage' && (userInputs.aiModel === 'thirdParty' || userInputs.aiModel === 'apiBased')) {
-            riskScore = Math.min(75, fallbackRiskScore + 15)
-          } else if (risk === 'hallucination' && userInputs.accuracyReq === 'critical') {
-            riskScore = Math.min(80, fallbackRiskScore + 20)
-          } else if (risk === 'promptInjection' && userInputs.useCase === 'customerService') {
-            riskScore = Math.min(70, fallbackRiskScore + 10)
-          }
-          return [risk, Math.max(20, Math.min(80, riskScore))]
-        })
-      ),
-      analysis: `Risk assessment completed for your ${userInputs.industry || "industry"} AI system using ${userInputs.aiModel || "AI model"} for ${userInputs.useCase || "use case"}. The system presents ${fallbackRiskScore >= 55 ? 'higher' : fallbackRiskScore >= 35 ? 'moderate' : 'lower'} risk levels based on data sensitivity (${userInputs.dataSensitivity || "not specified"}) and accuracy requirements (${userInputs.accuracyReq || "not specified"}). Framework validation shows risks in ${applicableRisks.join(", ")} categories require attention. The assessment follows FINOS governance standards for realistic risk evaluation.`,
+      overallRiskScore: overallRiskScore,
+      riskScores: individualRiskScores,
+      analysis: `Risk assessment completed for your ${userInputs.industry || "industry"} AI system using ${userInputs.aiModel || "AI model"} for ${userInputs.useCase || "use case"}. The system presents ${overallRiskScore >= 55 ? 'higher' : overallRiskScore >= 35 ? 'moderate' : 'lower'} risk levels based on data sensitivity (${userInputs.dataSensitivity || "not specified"}) and accuracy requirements (${userInputs.accuracyReq || "not specified"}). Framework validation shows risks in ${applicableRisks.join(", ")} categories require attention. The assessment follows industry governance standards for realistic risk evaluation.`,
       riskMitigations: [
         {
           riskId: "AIR-PREV-005",
@@ -403,6 +413,8 @@ Please provide a 4-5 sentence analysis that:
 3. Explains how the implemented controls have improved their security posture
 4. Highlights priority areas for improvement
 
+IMPORTANT: DO NOT mention specific risk scores, percentages, point values, or numbers in your analysis. Use qualitative terms like "higher risk", "moderate risk", "significant concerns", "some level", "substantial improvement", etc.
+
 Start with: "Based on your inputs and current implementations, it is analyzed that you have implemented..."
 
 Provide only the analysis text, no additional formatting.`
@@ -429,7 +441,7 @@ Provide only the analysis text, no additional formatting.`
   } catch (error) {
     console.error('AI analysis generation failed:', error)
     // Fallback analysis
-    aiGeneratedAnalysis = `Based on your inputs and current implementations, it is analyzed that you have implemented ${implementedControls.length} out of ${implementedControls.length + missingControls.length} critical controls for your ${userInputs.industry || "industry"} AI system. Your implemented controls have achieved ${gapAnalysis.totalRiskReduction} points of risk reduction. However, you still have ${Object.entries(adjustedRiskScores).filter(([_, score]) => score >= 60).length} risk areas that can affect your system and require attention. The related mitigations for possible risks are provided below.`
+    aiGeneratedAnalysis = `Based on your inputs and current implementations, it is analyzed that you have implemented ${implementedControls.length} out of ${implementedControls.length + missingControls.length} critical controls for your ${userInputs.industry || "industry"} AI system. Your implemented controls have achieved substantial risk reduction. However, you still have ${Object.entries(adjustedRiskScores).filter(([_, score]) => score >= 60).length} risk areas that can affect your system and require attention. The related mitigations for possible risks are provided below.`
   }
 
   // Get FINOS mitigations for risks that still need attention (only show mitigations for high-risk areas)

@@ -77,11 +77,8 @@ export default function AssessmentForm({ onComplete, isLoading, setIsLoading }: 
         {/* Header */}
         <div className="text-center mb-8">
           <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
-            FINOS AI Readiness Questionnaire
+            Questionnaire to be completed by Product Team
           </h2>
-          <p className="text-lg text-gray-600">
-            Complete your AI system assessment
-          </p>
         </div>
         
         {/* Single Form with All Fields */}
@@ -366,7 +363,7 @@ export default function AssessmentForm({ onComplete, isLoading, setIsLoading }: 
             <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
               {formData.hasRiskAssessment === 'yes' 
                 ? 'We\'ll review your current implementations against the FINOS framework and identify any gaps or improvements.'
-                : 'Our advanced AI will analyze your system against the FINOS framework and provide comprehensive risk assessment with actionable recommendations.'
+                : 'Our advanced AI will analyze your system against the industry framework and provide comprehensive risk assessment with actionable recommendations.'
               }
             </p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">

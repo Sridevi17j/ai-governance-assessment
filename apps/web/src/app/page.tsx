@@ -47,7 +47,7 @@ export default function Home() {
                 <span className="text-white font-bold">🛡️</span>
               </div>
               <div>
-                <h1 className="text-xl font-semibold text-gray-900">FINOS AI Governance</h1>
+                <h1 className="text-xl font-semibold text-gray-900">FinAIReadiness</h1>
                 <p className="text-sm text-gray-600">Enterprise AI Risk Assessment</p>
               </div>
             </div>
@@ -66,12 +66,12 @@ export default function Home() {
           {currentStep === 'form' && (
             <div>
               {/* Hero Section */}
-              <div className="text-center mb-12">
+              <div className="text-center mb-6">
                 <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-                  AI Risk Assessment
+                  FinAIReadiness Assessment
                 </h2>
                 <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                  Evaluate your AI system's compliance with industry-standard FINOS framework. 
+                  Evaluate your AI system's compliance with industry-standard framework.<br/>
                   Get intelligent analysis and actionable recommendations.
                 </p>
               </div>
@@ -111,7 +111,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between text-sm text-gray-500">
             <div className="flex items-center space-x-4 mb-4 md:mb-0">
-              <span>© 2025 FINOS AI Governance Assessment</span>
+              <span>© 2025 FinAIReadiness Assessment</span>
               <span>•</span>
               <span>Built for AI Governance Hackathon</span>
             </div>
