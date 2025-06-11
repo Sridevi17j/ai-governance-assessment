@@ -28,7 +28,7 @@
       "id": "AIR-PREV-017",
       "name": "Ai Firewall",
       "description": "The rapid and widespread integration of generative AI into application workflows, either through direct API calls, agentic workflows, or the client-server concept of the Model Context Protocol (MCP), brings forth emerging risks. These risks include model inversion, prompt injection, and data exfiltration or leakage. Given these threats, there is a growing necessity for a security system like an AI firewall. Such a firewall would intercept and analyze communication between user and agent, agent and tools, and even inter-agent communication. Its functions should include, but not be limited to, threat detection, monitoring, alerting, blocking, reporting, and implementing guardrails to preserve Personally Identifiable Information (PII) and the confidentiality of sensitive data.",
-      "link": "https://air-governance-framework.finos.org/mitigations/mi-17_ai-firewall.html"
+      "link": "https://air-governance-framework.finos.org/mitigations/mi-17_ai-firewall-implementation-and-management.html"
     },
     {
       "id": "AIR-PREV-003",
@@ -40,7 +40,7 @@
       "id": "AIR-DET-004",
       "name": "System Observability",
       "description": "This mitigation emphasizes logging and monitoring across the AI system to enhance visibility, detect anomalies, and support future compliance and security needs. It promotes full-system observability across inputs, outputs, APIs, and trust boundaries.",
-      "link": "https://air-governance-framework.finos.org/mitigations/mi-4_system-observability.html"
+      "link": "https://air-governance-framework.finos.org/mitigations/mi-4_ai-system-observability.html"
     }
   ],
   "references": {
